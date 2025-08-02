@@ -1,0 +1,82 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  phone     String?
+  company   String?
+  role      UserRole @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  rides        Ride[]
+  adminActions AdminAction[]
+
+  @@map("users")
+}
+
+model Ride {
+  id          String      @id @default(cuid())
+  userId      String
+  pickupLocation    String
+  dropLocation      String
+  scheduledTime     DateTime
+  status      RideStatus @default(PENDING)
+  purpose     String?
+  notes       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  adminActions AdminAction[]
+
+  @@map("rides")
+}
+
+model AdminAction {
+  id        String        @id @default(cuid())
+  adminId   String
+  rideId    String
+  action    AdminActionType
+  reason    String?
+  createdAt DateTime      @default(now())
+
+  // Relations
+  admin     User          @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  ride      Ride          @relation(fields: [rideId], references: [id], onDelete: Cascade)
+
+  @@map("admin_actions")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum RideStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  COMPLETED
+}
+
+enum AdminActionType {
+  APPROVE
+  REJECT
+  CANCEL
+} 
