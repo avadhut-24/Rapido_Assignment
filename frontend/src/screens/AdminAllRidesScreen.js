@@ -51,26 +51,17 @@ const AdminAllRidesScreen = ({ navigation }) => {
     username: '',
   });
 
-  // Pagination states
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    total: 0,
-    pages: 0,
-  });
-
   // Load rides on component mount
   useEffect(() => {
     loadRides();
-  }, [appliedFilters, pagination.page]);
+  }, [appliedFilters]);
 
   // Load rides from API
   const loadRides = async () => {
     try {
       setLoading(true);
       const params = {
-        page: pagination.page,
-        limit: pagination.limit,
+        limit: 100, // Show more rides at once
         ...appliedFilters,
       };
 
@@ -83,11 +74,6 @@ const AdminAllRidesScreen = ({ navigation }) => {
 
       const response = await adminAPI.getAllRides(params);
       setRides(response.data.rides);
-      setPagination(prev => ({
-        ...prev,
-        total: response.data.pagination.total,
-        pages: response.data.pagination.pages,
-      }));
     } catch (error) {
       console.error('Error loading rides:', error);
       Toast.show({
@@ -104,7 +90,7 @@ const AdminAllRidesScreen = ({ navigation }) => {
   // Handle pull-to-refresh
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    setPagination(prev => ({ ...prev, page: 1 }));
+    loadRides();
   }, [appliedFilters]);
 
   // Handle filter changes (only updates the form, doesn't apply)
@@ -115,7 +101,6 @@ const AdminAllRidesScreen = ({ navigation }) => {
   // Apply filters
   const applyFilters = () => {
     setAppliedFilters(filters);
-    setPagination(prev => ({ ...prev, page: 1 }));
   };
 
   // Clear all filters
@@ -129,16 +114,6 @@ const AdminAllRidesScreen = ({ navigation }) => {
     };
     setFilters(emptyFilters);
     setAppliedFilters(emptyFilters);
-    setPagination(prev => ({ ...prev, page: 1 }));
-  };
-
-
-
-  // Load more rides (pagination)
-  const loadMore = () => {
-    if (pagination.page < pagination.pages && !loading) {
-      setPagination(prev => ({ ...prev, page: prev.page + 1 }));
-    }
   };
 
   // Format date
@@ -430,17 +405,7 @@ const AdminAllRidesScreen = ({ navigation }) => {
       {/* Filters Section */}
       {showFilters && renderFilters()}
 
-      {/* Results Summary */}
-      <View style={styles.resultsContainer}>
-        <Text style={styles.resultsText}>
-          Showing {rides.length} of {pagination.total} rides
-        </Text>
-        {pagination.pages > 1 && (
-          <Text style={styles.paginationText}>
-            Page {pagination.page} of {pagination.pages}
-          </Text>
-        )}
-      </View>
+
 
       {/* Rides List */}
       <FlatList
@@ -451,8 +416,6 @@ const AdminAllRidesScreen = ({ navigation }) => {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.1}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <MaterialIcons name="directions-car" size={64} color="#666" />

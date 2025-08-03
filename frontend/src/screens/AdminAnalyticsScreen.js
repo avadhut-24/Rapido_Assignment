@@ -8,6 +8,7 @@ import {
   Platform,
   Modal,
   TouchableOpacity,
+  Dimensions,
 } from 'react-native';
 import {
   Card,
@@ -267,6 +268,58 @@ const AdminAnalyticsScreen = ({ navigation }) => {
                 <Text style={styles.statusCount}>{item.count}</Text>
               </View>
             ))}
+          </Card.Content>
+        </Card>
+
+        {/* Rides Per Day Chart */}
+        <Card style={styles.analyticsCard}>
+          <Card.Title title="Rides Per Day" />
+          <Card.Content>
+            {analytics.ridesPerDay && analytics.ridesPerDay.length > 0 ? (
+              <View style={styles.chartContainer}>
+                <View style={styles.chartLegend}>
+                  <Text style={styles.chartLegendText}>
+                    Showing rides scheduled for each day
+                  </Text>
+                </View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <View style={styles.chartWrapper}>
+                    {analytics.ridesPerDay.map((dayData, index) => {
+                      const maxRides = Math.max(...analytics.ridesPerDay.map(d => d.count));
+                      const barHeight = maxRides > 0 ? (dayData.count / maxRides) * 150 : 0;
+                      const date = new Date(dayData.date);
+                      const dayLabel = date.toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric' 
+                      });
+                      
+                      return (
+                        <View key={index} style={styles.barContainer}>
+                          <View style={styles.barWrapper}>
+                            <View 
+                              style={[
+                                styles.bar, 
+                                { 
+                                  height: barHeight,
+                                  backgroundColor: barHeight > 0 ? '#2196F3' : '#E0E0E0'
+                                }
+                              ]} 
+                            />
+                          </View>
+                          <Text style={styles.barLabel}>{dayLabel}</Text>
+                          <Text style={styles.barValue}>{dayData.count}</Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </ScrollView>
+                {analytics.ridesPerDay.length === 0 && (
+                  <Text style={styles.noDataText}>No rides data available for the selected period</Text>
+                )}
+              </View>
+            ) : (
+              <Text style={styles.noDataText}>No rides data available for the selected period</Text>
+            )}
           </Card.Content>
         </Card>
 
@@ -836,6 +889,58 @@ const styles = StyleSheet.create({
   },
   emptyDay: {
     backgroundColor: 'transparent',
+  },
+  // Chart Styles
+  chartContainer: {
+    marginTop: 8,
+  },
+  chartLegend: {
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  chartLegendText: {
+    fontSize: 12,
+    color: '#666',
+    fontStyle: 'italic',
+  },
+  chartWrapper: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    paddingHorizontal: 16,
+    minHeight: 200,
+  },
+  barContainer: {
+    alignItems: 'center',
+    marginHorizontal: 8,
+    minWidth: 40,
+  },
+  barWrapper: {
+    height: 150,
+    justifyContent: 'flex-end',
+    marginBottom: 8,
+  },
+  bar: {
+    width: 30,
+    borderRadius: 4,
+    minHeight: 4,
+  },
+  barLabel: {
+    fontSize: 10,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  barValue: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+  },
+  noDataText: {
+    textAlign: 'center',
+    color: '#666',
+    fontStyle: 'italic',
+    marginTop: 20,
   },
 });
 
