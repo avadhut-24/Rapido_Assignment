@@ -110,4 +110,5 @@ ehthumbs.db
 Thumbs.db
 
 # Prisma
-prisma/migrations/ 
+prisma/migrations/
+# Note: seed.js is intentionally included in git for deployment purposes 

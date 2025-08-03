@@ -223,16 +223,37 @@ const getAnalytics = async (req, res) => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const ridesPerDay = await prisma.ride.groupBy({
-      by: ['scheduledTime'],
+    // Get all rides in the date range with proper timezone handling
+    const ridesInRange = await prisma.ride.findMany({
       where: {
-        ...rideDateFilter,
         scheduledTime: {
-          gte: startDate ? new Date(startDate + 'T00:00:00') : thirtyDaysAgo
+          gte: startDate ? 
+            new Date(new Date(startDate + 'T00:00:00').getTime() - new Date(startDate + 'T00:00:00').getTimezoneOffset() * 60000) : 
+            thirtyDaysAgo,
+          ...(endDate && { 
+            lte: new Date(new Date(endDate + 'T23:59:59.999').getTime() - new Date(endDate + 'T23:59:59.999').getTimezoneOffset() * 60000) 
+          })
         }
       },
-      _count: { scheduledTime: true }
+      select: {
+        scheduledTime: true
+      },
+      orderBy: {
+        scheduledTime: 'desc'
+      }
     });
+
+    // Group rides by date and count them
+    const ridesPerDayMap = {};
+    ridesInRange.forEach(ride => {
+      const dateKey = ride.scheduledTime.toISOString().split('T')[0];
+      ridesPerDayMap[dateKey] = (ridesPerDayMap[dateKey] || 0) + 1;
+    });
+
+    // Convert to array and sort by date (descending)
+    const ridesPerDay = Object.entries(ridesPerDayMap)
+      .map(([date, count]) => ({ date, count }))
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
 
     // Get top users by ride count
     const topUsers = await prisma.ride.groupBy({
@@ -294,10 +315,7 @@ const getAnalytics = async (req, res) => {
         status: item.status,
         count: item._count.status
       })),
-      ridesPerDay: ridesPerDay.map(item => ({
-        date: item.scheduledTime.toISOString().split('T')[0],
-        count: item._count.scheduledTime
-      })),
+      ridesPerDay: ridesPerDay,
       topUsers: topUsersWithDetails,
       recentAdminActions
     });

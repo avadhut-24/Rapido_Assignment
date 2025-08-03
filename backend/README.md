@@ -63,7 +63,7 @@ A comprehensive backend API for managing corporate ride scheduling with user man
    # Push schema to database
    npm run db:push
    
-   # Seed the database with sample data
+   # Seed the database with sample data (optional but recommended)
    npm run db:seed
    ```
 
@@ -326,20 +326,133 @@ Authorization: Bearer <admin-token>
 
 ---
 
-## 🧪 Sample Data
+## 🧪 Database Seeding
 
-After running the seed script, you'll have:
+The project includes a comprehensive seed file (`src/seed.js`) that populates the database with sample data for testing and demonstration purposes.
 
-### Users
-- **Admin**: `admin@rapido.com` (password: `admin123`)
-- **Regular Users**: 
-  - `john.doe@company.com` (password: `user123`)
-  - `jane.smith@company.com` (password: `user123`)
-  - `mike.johnson@company.com` (password: `user123`)
+### 🌱 Running the Seed Script
 
-### Sample Rides
-- Various ride requests with different statuses (PENDING, APPROVED, REJECTED, COMPLETED)
-- Admin actions for approved/rejected rides
+```bash
+# Run the seed script
+npm run db:seed
+
+# Or run it directly
+node src/seed.js
+```
+
+### 📋 What the Seed Script Creates
+
+#### Users
+- **Admin User**: 
+  - Email: `admin@rapido.com`
+  - Password: `admin123`
+  - Role: ADMIN
+  - Company: Rapido
+
+- **Regular Users**:
+  - `john.doe@company.com` (password: `user123`) - Tech Corp
+  - `jane.smith@company.com` (password: `user123`) - Innovation Inc
+  - `mike.johnson@company.com` (password: `user123`) - Startup XYZ
+
+#### Sample Rides
+The seed script creates 6 sample rides with various statuses:
+- **PENDING**: Future rides awaiting admin approval
+- **APPROVED**: Rides that have been approved by admin
+- **REJECTED**: Rides that were rejected by admin
+- **COMPLETED**: Past rides that have been completed
+
+#### Admin Actions
+- Sample approve/reject actions for demonstration
+- Audit trail showing admin decisions
+
+### 🔄 Re-running the Seed Script
+
+The seed script uses `upsert` operations, which means:
+- If data already exists, it will be updated
+- If data doesn't exist, it will be created
+- You can safely run the seed script multiple times
+
+```bash
+# Re-seed the database (updates existing data)
+npm run db:seed
+```
+
+### 🚀 Production Deployment
+
+For production deployment, you can:
+
+1. **Skip seeding** (recommended for production):
+   ```bash
+   npm run db:push  # Only push schema, don't seed
+   ```
+
+2. **Seed with custom data**:
+   - Modify `src/seed.js` to create production-specific data
+   - Run `npm run db:seed` after deployment
+
+3. **Create admin user only**:
+   ```bash
+   # Modify seed.js to only create admin user
+   # Then run: npm run db:seed
+   ```
+
+### 🛠️ Customizing the Seed Data
+
+To customize the seed data:
+
+1. **Edit `src/seed.js`**:
+   ```javascript
+   // Modify user data
+   const admin = await prisma.user.upsert({
+     where: { email: 'your-admin@company.com' },
+     update: {},
+     create: {
+       email: 'your-admin@company.com',
+       password: await bcrypt.hash('your-password', 12),
+       name: 'Your Admin Name',
+       role: 'ADMIN'
+     }
+   });
+
+   // Add more sample rides
+   const customRides = [
+     {
+       userId: user1.id,
+       pickupLocation: 'Your Pickup Location',
+       dropLocation: 'Your Drop Location',
+       scheduledTime: new Date(),
+       purpose: 'Your Purpose',
+       status: 'PENDING'
+     }
+   ];
+   ```
+
+2. **Run the updated seed script**:
+   ```bash
+   npm run db:seed
+   ```
+
+### 📊 Seed Script Features
+
+- **Safe Operations**: Uses `upsert` to avoid duplicate data
+- **Password Hashing**: Automatically hashes passwords with bcrypt
+- **Realistic Data**: Creates realistic sample data for testing
+- **Status Variety**: Includes rides with all possible statuses
+- **Admin Actions**: Creates sample admin decisions for demonstration
+- **Error Handling**: Proper error handling and logging
+- **Cleanup**: Automatically disconnects from database when done
+
+### 🔍 Verifying Seed Data
+
+After running the seed script, you can verify the data:
+
+```bash
+# Check users
+npx prisma studio  # Opens Prisma Studio in browser
+
+# Or use Prisma CLI
+npx prisma db seed --preview-feature
+```
 
 ---
 
@@ -353,7 +466,7 @@ npm run db:generate # Generate Prisma client
 npm run db:push     # Push schema to database
 npm run db:migrate  # Run database migrations
 npm run db:studio   # Open Prisma Studio
-npm run db:seed     # Seed database with sample data
+npm run db:seed     # Seed database with sample data (see Database Seeding section)
 ```
 
 ### Project Structure
@@ -409,7 +522,7 @@ Make sure to set these in production:
 ### Database Setup
 1. Create PostgreSQL database
 2. Run `npm run db:push` to apply schema
-3. Run `npm run db:seed` to populate initial data
+3. Run `npm run db:seed` to populate initial data (optional but recommended for testing)
 
 ### Production Considerations
 - Use environment variables for sensitive data
