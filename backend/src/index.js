@@ -8,6 +8,7 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const rideRoutes = require('./routes/rides');
 const adminRoutes = require('./routes/admin');
+const simulationRoutes = require('./routes/simulation');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -72,15 +73,23 @@ app.get('/api', (req, res) => {
           'DELETE /rides/:id': 'Cancel ride'
         }
       },
-      admin: {
-        description: 'Admin management endpoints',
-        routes: {
-          'GET /admin/rides': 'View all rides with filters',
-          'POST /admin/rides/:id/action': 'Approve/reject ride',
-          'GET /admin/analytics': 'Get ride analytics',
-          'GET /admin/dashboard': 'Get dashboard statistics'
+             admin: {
+         description: 'Admin management endpoints',
+         routes: {
+           'GET /admin/rides': 'View all rides with filters',
+           'POST /admin/rides/:id/action': 'Approve/reject ride',
+           'GET /admin/analytics': 'Get ride analytics',
+           'GET /admin/dashboard': 'Get dashboard statistics'
+         }
+       },
+               simulation: {
+          description: 'Simulation endpoints for testing ride completion (no admin actions created)',
+          routes: {
+            'GET /simulation/rides/eligible-for-completion': 'Get rides eligible for completion simulation',
+            'POST /simulation/rides/:rideId/complete': 'Simulate completion of a single ride (status only)',
+            'POST /simulation/rides/bulk-complete': 'Bulk simulate completion of multiple rides (status only)'
+          }
         }
-      }
     },
     authentication: {
       type: 'JWT Bearer Token',
@@ -119,6 +128,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/rides', rideRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/simulation', simulationRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

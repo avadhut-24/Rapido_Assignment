@@ -67,8 +67,36 @@ const validateRideFilters = [
   query('startDate').optional().isISO8601().withMessage('Valid start date is required'),
   query('endDate').optional().isISO8601().withMessage('Valid end date is required'),
   query('userId').optional().isUUID().withMessage('Valid user ID is required'),
+  query('username').optional().trim().isLength({ min: 1 }).withMessage('Username must not be empty'),
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
   query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
+  handleValidationErrors
+];
+
+// Analytics validation rules
+const validateAnalyticsFilters = [
+  query('startDate').optional().custom((value) => {
+    if (value === '' || value === null || value === undefined) return true;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      throw new Error('Start date must be in YYYY-MM-DD format');
+    }
+    const date = new Date(value);
+    if (isNaN(date.getTime())) {
+      throw new Error('Invalid start date');
+    }
+    return true;
+  }),
+  query('endDate').optional().custom((value) => {
+    if (value === '' || value === null || value === undefined) return true;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      throw new Error('End date must be in YYYY-MM-DD format');
+    }
+    const date = new Date(value);
+    if (isNaN(date.getTime())) {
+      throw new Error('Invalid end date');
+    }
+    return true;
+  }),
   handleValidationErrors
 ];
 
@@ -86,6 +114,7 @@ module.exports = {
   validateRideUpdate,
   validateRideAction,
   validateRideFilters,
+  validateAnalyticsFilters,
   validateIdParam,
   handleValidationErrors
 }; 

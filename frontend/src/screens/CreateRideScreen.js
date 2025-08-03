@@ -223,7 +223,7 @@ const CreateRideScreen = ({ navigation }) => {
         </Card>
 
         {/* Date/Time Picker */}
-        {showDatePicker && (
+        {showDatePicker && Platform.OS !== 'web' && (
           <DateTimePicker
             value={formData.scheduledTime}
             mode="datetime"
@@ -231,6 +231,30 @@ const CreateRideScreen = ({ navigation }) => {
             onChange={handleDateChange}
             minimumDate={new Date()}
           />
+        )}
+        
+        {/* Web Date/Time Picker */}
+        {showDatePicker && Platform.OS === 'web' && (
+          <View style={styles.webDatePicker}>
+            <input
+              type="datetime-local"
+              value={formData.scheduledTime.toISOString().slice(0, 16)}
+              onChange={(e) => {
+                const newDate = new Date(e.target.value);
+                updateFormData('scheduledTime', newDate);
+                setShowDatePicker(false);
+              }}
+              min={new Date().toISOString().slice(0, 16)}
+              style={styles.webDateTimeInput}
+            />
+            <Button
+              mode="outlined"
+              onPress={() => setShowDatePicker(false)}
+              style={styles.closeButton}
+            >
+              Close
+            </Button>
+          </View>
         )}
       </ScrollView>
     </KeyboardAvoidingView>
@@ -287,6 +311,32 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     borderColor: '#666',
+  },
+  webDatePicker: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -150 }, { translateY: -100 }],
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 8,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    zIndex: 1000,
+  },
+  webDateTimeInput: {
+    fontSize: 16,
+    padding: 12,
+    border: '1px solid #ccc',
+    borderRadius: 4,
+    marginBottom: 10,
+    width: '100%',
+  },
+  closeButton: {
+    marginTop: 10,
   },
 });
 

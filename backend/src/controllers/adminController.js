@@ -173,21 +173,49 @@ const getAnalytics = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
 
-    // Build date filter
-    const dateFilter = {};
+    // Build date filter for rides - convert local dates to UTC
+    const rideDateFilter = {};
     if (startDate || endDate) {
-      dateFilter.scheduledTime = {};
-      if (startDate) dateFilter.scheduledTime.gte = new Date(startDate);
-      if (endDate) dateFilter.scheduledTime.lte = new Date(endDate);
+      try {
+        rideDateFilter.scheduledTime = {};
+        if (startDate) {
+          const localDate = new Date(startDate + 'T00:00:00');
+          rideDateFilter.scheduledTime.gte = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000);
+        }
+        if (endDate) {
+          const localDate = new Date(endDate + 'T23:59:59.999');
+          rideDateFilter.scheduledTime.lte = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000);
+        }
+      } catch (error) {
+        return res.status(400).json({ error: 'Invalid date format' });
+      }
+    }
+
+    // Build date filter for admin actions - convert local dates to UTC
+    const actionDateFilter = {};
+    if (startDate || endDate) {
+      try {
+        actionDateFilter.createdAt = {};
+        if (startDate) {
+          const localDate = new Date(startDate + 'T00:00:00');
+          actionDateFilter.createdAt.gte = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000);
+        }
+        if (endDate) {
+          const localDate = new Date(endDate + 'T23:59:59.999');
+          actionDateFilter.createdAt.lte = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000);
+        }
+      } catch (error) {
+        return res.status(400).json({ error: 'Invalid date format' });
+      }
     }
 
     // Get total rides
-    const totalRides = await prisma.ride.count({ where: dateFilter });
+    const totalRides = await prisma.ride.count({ where: rideDateFilter });
 
     // Get rides by status
     const ridesByStatus = await prisma.ride.groupBy({
       by: ['status'],
-      where: dateFilter,
+      where: rideDateFilter,
       _count: { status: true }
     });
 
@@ -198,9 +226,9 @@ const getAnalytics = async (req, res) => {
     const ridesPerDay = await prisma.ride.groupBy({
       by: ['scheduledTime'],
       where: {
-        ...dateFilter,
+        ...rideDateFilter,
         scheduledTime: {
-          gte: startDate ? new Date(startDate) : thirtyDaysAgo
+          gte: startDate ? new Date(startDate + 'T00:00:00') : thirtyDaysAgo
         }
       },
       _count: { scheduledTime: true }
@@ -209,7 +237,7 @@ const getAnalytics = async (req, res) => {
     // Get top users by ride count
     const topUsers = await prisma.ride.groupBy({
       by: ['userId'],
-      where: dateFilter,
+      where: rideDateFilter,
       _count: { userId: true },
       orderBy: {
         _count: {
@@ -231,11 +259,11 @@ const getAnalytics = async (req, res) => {
           rideCount: user._count.userId
         };
       })
-    );
+    ).then(users => users.filter(user => user.user !== null)); // Filter out null users
 
     // Get recent admin actions
     const recentAdminActions = await prisma.adminAction.findMany({
-      where: dateFilter,
+      where: actionDateFilter,
       include: {
         admin: {
           select: {

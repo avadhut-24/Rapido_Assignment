@@ -2,9 +2,17 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Base URL for your backend API
-const BASE_URL = 'http://10.0.2.2:3000'; // For Android emulator
-// const BASE_URL = 'http://localhost:3000'; // For web development
-// const BASE_URL = 'http://your-backend-url.com'; // For production
+// For React Native (Android emulator)
+const BASE_URL_ANDROID = 'http://10.0.2.2:3000';
+
+// For web interface
+const BASE_URL_WEB = 'http://localhost:3000';
+
+// For production
+const BASE_URL_PRODUCTION = 'http://your-backend-url.com';
+
+// Select the appropriate base URL based on platform
+const BASE_URL = typeof window !== 'undefined' ? BASE_URL_WEB : BASE_URL_ANDROID;
 
 // Create axios instance
 const api = axios.create({

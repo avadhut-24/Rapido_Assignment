@@ -1,6 +1,6 @@
 const express = require('express');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
-const { validateRideAction, validateRideFilters, validateIdParam } = require('../middleware/validation');
+const { validateRideAction, validateRideFilters, validateAnalyticsFilters, validateIdParam } = require('../middleware/validation');
 const { 
   getAllRides, 
   approveRejectRide, 
@@ -21,7 +21,7 @@ router.get('/rides', validateRideFilters, getAllRides);
 router.post('/rides/:id/action', validateIdParam, validateRideAction, approveRejectRide);
 
 // Get ride analytics
-router.get('/analytics', getAnalytics);
+router.get('/analytics', validateAnalyticsFilters, getAnalytics);
 
 // Get dashboard statistics
 router.get('/dashboard', getDashboard);
